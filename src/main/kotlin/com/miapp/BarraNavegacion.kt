@@ -25,7 +25,7 @@ class BarraNavegacion(
         crearBoton("RSE")
         crearBoton("Agenda")
         crearBoton("Kit digital")
-        crearBoton("Ambiental")
+
     }
 
     private fun crearBoton(texto: String) {
@@ -55,7 +55,7 @@ class BarraNavegacion(
 
     // Estilos CSS integrados para simular el diseño de la imagen
     private fun estiloInactivo() = """
-        -fx-background-color: #f3f4f6;
+        -fx-background-color: #35c8b4;
         -fx-text-fill: #374151;
         -fx-border-color: #e5e7eb;
         -fx-border-radius: 8;
@@ -64,8 +64,8 @@ class BarraNavegacion(
     """.trimIndent()
 
     private fun estiloActivo() = """
-        -fx-background-color: #1f2937;
-        -fx-text-fill: white;
+        -fx-background-color: #C2F2E4;
+        -fx-text-fill: #374151;
         -fx-border-radius: 8;
         -fx-background-radius: 8;
         -fx-font-weight: bold;

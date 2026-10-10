@@ -104,4 +104,125 @@ object ExportManager {
             document.close()
         }
     }
+
+    fun exportarBitacoraAPdf(registros: List<RegistroBitacora>, archivo: File) {
+        val document = Document()
+        FileOutputStream(archivo).use { outputStream ->
+            PdfWriter.getInstance(document, outputStream)
+            document.open()
+
+            val tituloPrincipal = Paragraph("Reporte de Bitácora Diaria de 3 Números\n\n").apply {
+                alignment = Element.ALIGN_CENTER
+                font = Font(Font.HELVETICA, 16f, Font.BOLD)
+            }
+            document.add(tituloPrincipal)
+
+            // Agrupamos todos los registros por Mes y Año para procesarlos en bloque
+            val registrosPorMes = registros.groupBy { it.fecha.withDayOfMonth(1) }.toSortedMap()
+
+            registrosPorMes.forEach { (primerDiaDelMes, regs) ->
+                val mesStr = "${primerDiaDelMes.month} ${primerDiaDelMes.year}"
+                document.add(Paragraph("Mes: $mesStr\n").apply { font = Font(Font.HELVETICA, 14f, Font.BOLD) })
+
+                // Lógica de Advertencia en el PDF
+                val diasTotales = primerDiaDelMes.lengthOfMonth()
+                val diasCargados = regs.size
+                
+                if (diasCargados < diasTotales) {
+                    document.add(Paragraph("AVISO: El registro de este mes está incompleto ($diasCargados de $diasTotales días cargados).\n").apply {
+                        font = Font(Font.HELVETICA, 11f, Font.ITALIC)
+                    })
+                } else {
+                    document.add(Paragraph("Estado: Mes completo.\n").apply {
+                        font = Font(Font.HELVETICA, 11f, Font.ITALIC)
+                    })
+                }
+
+                // Generar la tabla para el PDF
+                val table = PdfPTable(4).apply {
+                    setWidthPercentage(100f)
+                    setSpacingBefore(10f)
+                    setSpacingAfter(20f)
+                }
+                
+                table.addCell(Phrase("Fecha"))
+                table.addCell(Phrase("Producción/Ventas"))
+                table.addCell(Phrase("Mermas"))
+                table.addCell(Phrase("Quejas"))
+
+                var sumProd = 0
+                var sumMerma = 0
+                var sumQuejas = 0
+
+                // Dibujar cada día
+                regs.forEach { r ->
+                    table.addCell(Phrase(r.fecha.toString()))
+                    table.addCell(Phrase(r.produccion.toString()))
+                    table.addCell(Phrase(r.mermas.toString()))
+                    table.addCell(Phrase(r.quejas.toString()))
+                    
+                    sumProd += r.produccion
+                    sumMerma += r.mermas
+                    sumQuejas += r.quejas
+                }
+
+                // Fila final de totales mensuales
+                table.addCell(Phrase("TOTAL MES"))
+                table.addCell(Phrase(sumProd.toString()))
+                table.addCell(Phrase(sumMerma.toString()))
+                table.addCell(Phrase(sumQuejas.toString()))
+
+                document.add(table)
+            }
+
+            document.close()
+        }
+    }
+    fun exportarAgendaAPdf(contactos: List<ContactoInstitucional>, archivo: File) {
+        val document = Document()
+        FileOutputStream(archivo).use { outputStream ->
+            PdfWriter.getInstance(document, outputStream)
+            document.open()
+
+            val tituloPrincipal = Paragraph("Agenda de Seguimientos Institucionales\n\n").apply {
+                alignment = Element.ALIGN_CENTER
+                font = Font(Font.HELVETICA, 16f, Font.BOLD)
+            }
+            document.add(tituloPrincipal)
+
+            // Agrupar los contactos tomando el primer día del mes de su fecha de seguimiento
+            val contactosPorMes = contactos.groupBy { it.proximoSeguimiento.withDayOfMonth(1) }.toSortedMap()
+
+            contactosPorMes.forEach { (primerDiaDelMes, listaContactos) ->
+                val mesStr = "${primerDiaDelMes.month} ${primerDiaDelMes.year}"
+                
+                // Título del mes
+                document.add(Paragraph("Seguimientos programados para: $mesStr\n").apply { 
+                    font = Font(Font.HELVETICA, 14f, Font.BOLD) 
+                })
+
+                val table = PdfPTable(4).apply {
+                    setWidthPercentage(100f)
+                    setSpacingBefore(10f)
+                    setSpacingAfter(25f)
+                }
+                
+                table.addCell(Phrase("Fecha"))
+                table.addCell(Phrase("Institución"))
+                table.addCell(Phrase("Persona de contacto"))
+                table.addCell(Phrase("Asunto tratado"))
+
+                listaContactos.forEach { c ->
+                    table.addCell(Phrase(c.proximoSeguimiento.toString()))
+                    table.addCell(Phrase(c.institucion))
+                    table.addCell(Phrase(c.persona))
+                    table.addCell(Phrase(c.ultimoContacto))
+                }
+
+                document.add(table)
+            }
+
+            document.close()
+        }
+    }
 }
