@@ -6,31 +6,18 @@ plugins {
 }
 
 repositories {
-    google()
     mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-}
-kotlin {
-    jvmToolchain(21)
 }
 
-dependencies {   
-    //Libreria para utilizar SQLite
+dependencies {
     implementation("org.xerial:sqlite-jdbc:3.45.1.0")
-
-    //Libreria para exportar a PDF
     implementation("com.github.librepdf:openpdf:1.3.35")
-
-    //Libreria para exportar a archivo Excel
     implementation("org.apache.poi:poi-ooxml:5.2.5")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.0")
 }
 
 javafx {
     version = "21"
-    modules = listOf("javafx.controls","javafx.graphics")
+    modules = listOf("javafx.controls", "javafx.graphics")
 }
 
 application {
@@ -39,6 +26,19 @@ application {
 
 runtime {
     options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+    
+    // ESTA ES LA CLAVE: Al declarar los módulos, apagamos el escáner automático que rompe la compilación
+    modules.set(listOf(
+        "java.base",
+        "java.desktop",
+        "java.sql",
+        "java.xml",
+        "java.naming",
+        "java.management",
+        "jdk.unsupported",
+        "jdk.crypto.ec"
+    ))
+
     launcher {
         noConsole = true 
     }
@@ -46,7 +46,6 @@ runtime {
         imageName = "PanelMGACS"
         installerName = "Instalador_PanelMGACS"
         
-        // Aplica estas reglas solo si el compilador detecta que está corriendo en Windows
         if (System.getProperty("os.name").lowercase().contains("windows")) {
             installerOptions = listOf("--win-dir-chooser", "--win-shortcut", "--win-menu")
         }
