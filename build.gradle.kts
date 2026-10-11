@@ -25,18 +25,18 @@ application {
 }
 
 runtime {
-    options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+    // 1. Quitamos la compresión agresiva que daña los archivos en Windows
+    options.set(listOf("--strip-debug", "--no-header-files", "--no-man-pages"))
     
-    // ESTA ES LA CLAVE: Al declarar los módulos, apagamos el escáner automático que rompe la compilación
+    // 2. Incluimos el paquete completo 'java.se' y utilidades vitales para Apache POI (Excel)
     modules.set(listOf(
-        "java.base",
-        "java.desktop",
-        "java.sql",
-        "java.xml",
-        "java.naming",
-        "java.management",
+        "java.se",
         "jdk.unsupported",
-        "jdk.crypto.ec"
+        "jdk.unsupported.desktop",
+        "jdk.charsets",
+        "jdk.localedata",
+        "jdk.crypto.ec",
+        "jdk.zipfs" 
     ))
 
     launcher {
