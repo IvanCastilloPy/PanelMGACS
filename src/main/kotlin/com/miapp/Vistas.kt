@@ -574,3 +574,140 @@ class VistaKitDigital : VBox(20.0){
         }
     }
 }
+data class RegistroAmbiental(val semanaDel: LocalDate, val puntaje: Int)
+class VistaAmbiental : VBox(15.0) {
+    private val reportesGuardados = mutableListOf<RegistroAmbiental>()
+    private val checkboxes = mutableListOf<CheckBox>()
+    private val lblPuntaje = Label("Puntaje de esta semana: 0 de 20")
+    private val contenedorLista = VBox(5.0)
+
+    init {
+        padding = Insets(30.0)
+        style = "-fx-background-color: #C2F2E4; -fx-background-radius: 12; -fx-border-color: #e5e7eb; -fx-border-radius: 12;"
+        maxWidth = 750.0
+
+        val titulo = Label("Check Ambiental Semanal").apply { font = Font.font("System", FontWeight.BOLD, 22.0) }
+        val subtitulo = Label("Marcá cada práctica cumplida, día por día. Ideal para pegar el resultado en la planta.").apply { textFill = Color.GRAY }
+
+        // Cuadrícula para las prácticas y los días
+        val grid = GridPane().apply {
+            hgap = 25.0
+            vgap = 15.0
+            padding = Insets(20.0, 0.0, 20.0, 0.0)
+        }
+
+        // Encabezados
+        val dias = listOf("Lun", "Mar", "Mié", "Jue", "Vie")
+        grid.add(Label("Práctica").apply { font = Font.font("System", FontWeight.BOLD, 14.0) }, 0, 0)
+        dias.forEachIndexed { i, dia ->
+            grid.add(Label(dia).apply { font = Font.font("System", FontWeight.BOLD, 14.0); textFill = Color.web("#4b5563") }, i + 1, 0)
+        }
+
+        // Lista de prácticas
+        val practicas = listOf(
+            "Separamos residuos orgánicos",
+            "Separamos plástico/cartón",
+            "Revisamos fugas de agua",
+            "Apagamos equipos al cerrar"
+        )
+
+        // Llenar la cuadrícula con las prácticas y sus respectivos CheckBoxes
+        practicas.forEachIndexed { rowIndex, practica ->
+            grid.add(Label(practica).apply { textFill = Color.web("#374151") }, 0, rowIndex + 1)
+            for (colIndex in 1..5) {
+                val cb = CheckBox().apply {
+                    style = "-fx-cursor: hand;"
+                    setOnAction { actualizarPuntaje() }
+                }
+                checkboxes.add(cb)
+                grid.add(cb, colIndex, rowIndex + 1)
+            }
+        }
+
+        lblPuntaje.apply { 
+            font = Font.font("System", FontWeight.BOLD, 16.0)
+            textFill = Color.web("#047857") // Verde oscuro
+        }
+
+        // Controles para guardar la semana y exportar
+        val dpSemana = DatePicker(LocalDate.now()).apply { prefWidth = 140.0 }
+        val btnGuardar = Button("Guardar semana").apply {
+            style = "-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-border-radius: 6;"
+            setOnAction {
+                val pts = checkboxes.count { it.isSelected }
+                // Forzamos a que la fecha represente el "Lunes" de esa semana para evitar duplicados
+                val lunes = dpSemana.value.with(java.time.DayOfWeek.MONDAY)
+                
+                reportesGuardados.removeIf { it.semanaDel == lunes }
+                reportesGuardados.add(RegistroAmbiental(lunes, pts))
+                reportesGuardados.sortBy { it.semanaDel }
+                
+                actualizarLista()
+                
+                // Limpiar checks para la siguiente semana
+                checkboxes.forEach { it.isSelected = false }
+                actualizarPuntaje()
+            }
+        }
+
+        val btnExportar = Button("Exportar a PDF").apply {
+            style = "-fx-background-color: #10b981; -fx-text-fill: white; -fx-border-radius: 6;"
+            setOnAction {
+                if (reportesGuardados.isEmpty()) {
+                    Alert(Alert.AlertType.WARNING, "No hay semanas guardadas para exportar.").showAndWait()
+                    return@setOnAction
+                }
+                val fileChooser = FileChooser().apply {
+                    title = "Guardar Reporte Ambiental PDF"
+                    extensionFilters.add(FileChooser.ExtensionFilter("PDF", "*.pdf"))
+                    initialFileName = "Reporte_Ambiental.pdf"
+                }
+                val archivo = fileChooser.showSaveDialog(this@VistaAmbiental.scene.window)
+                if (archivo != null) {
+                    ExportManager.exportarAmbientalAPdf(reportesGuardados, archivo)
+                    Alert(Alert.AlertType.INFORMATION, "PDF ambiental guardado correctamente.").showAndWait()
+                }
+            }
+        }
+
+        val panelGuardar = HBox(15.0, Label("Semana del:"), dpSemana, btnGuardar, btnExportar).apply {
+            alignment = Pos.CENTER_LEFT
+            padding = Insets(15.0, 0.0, 10.0, 0.0)
+        }
+
+        val tituloLista = Label("Historial de semanas guardadas:").apply { font = Font.font("System", FontWeight.BOLD, 14.0) }
+        val seccionLista = VBox(10.0, tituloLista, contenedorLista).apply {
+            padding = Insets(15.0)
+            style = "-fx-background-color: #ffffff; -fx-border-color: #e5e7eb; -fx-border-radius: 8;"
+        }
+
+        children.addAll(titulo, subtitulo, grid, lblPuntaje, panelGuardar, seccionLista)
+        actualizarLista()
+    }
+
+    private fun actualizarPuntaje() {
+        val pts = checkboxes.count { it.isSelected }
+        lblPuntaje.text = "Puntaje de esta semana: $pts de 20"
+    }
+
+    private fun actualizarLista() {
+        contenedorLista.children.clear()
+        if (reportesGuardados.isEmpty()) {
+            contenedorLista.children.add(Label("Ninguna semana guardada aún."))
+            return
+        }
+
+        reportesGuardados.forEachIndexed { index, reporte ->
+            val lbl = Label("• Semana del Lunes ${reporte.semanaDel}:   ${reporte.puntaje} / 20 puntos")
+            val btnBorrar = Button("Eliminar").apply {
+                style = "-fx-text-fill: red; -fx-background-color: transparent; -fx-cursor: hand; -fx-underline: true;"
+                setOnAction {
+                    reportesGuardados.removeAt(index)
+                    actualizarLista()
+                }
+            }
+            val fila = HBox(15.0, lbl, btnBorrar).apply { alignment = Pos.CENTER_LEFT }
+            contenedorLista.children.add(fila)
+        }
+    }
+}

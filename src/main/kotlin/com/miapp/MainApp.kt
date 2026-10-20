@@ -22,7 +22,7 @@ class MainApp : Application() {
 
         panelPrincipal.top = barraNavegacion
 
-        cambiarVista("Semáforo")
+        cambiarVista("Agenda")
 
         stage.scene = Scene(panelPrincipal, 800.0, 600.0)
         stage.title = "Panel de Gestión Diaria — MGACS"
@@ -36,6 +36,7 @@ class MainApp : Application() {
             "RSE" -> VistaRse()
             "Agenda" -> VistaAgenda()
             "Kit digital" -> VistaKitDigital()
+            "Ambiental" -> VistaAmbiental()
             else -> VistaAgenda()
         }
         

@@ -225,4 +225,33 @@ object ExportManager {
             document.close()
         }
     }
+    fun exportarAmbientalAPdf(reportes: List<RegistroAmbiental>, archivo: File) {
+        val document = Document()
+        FileOutputStream(archivo).use { outputStream ->
+            PdfWriter.getInstance(document, outputStream)
+            document.open()
+
+            val tituloPrincipal = Paragraph("Reporte de Check Ambiental Semanal\n\n").apply {
+                alignment = Element.ALIGN_CENTER
+                font = Font(Font.HELVETICA, 16f, Font.BOLD)
+            }
+            document.add(tituloPrincipal)
+
+            val table = PdfPTable(2).apply {
+                setWidthPercentage(100f)
+                setSpacingBefore(15f)
+            }
+            
+            table.addCell(Phrase("Semana (Día Lunes)"))
+            table.addCell(Phrase("Puntaje Obtenido"))
+
+            reportes.forEach { r ->
+                table.addCell(Phrase(r.semanaDel.toString()))
+                table.addCell(Phrase("${r.puntaje} de 20"))
+            }
+
+            document.add(table)
+            document.close()
+        }
+    }
 }

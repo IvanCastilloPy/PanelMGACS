@@ -25,6 +25,7 @@ class BarraNavegacion(
         crearBoton("RSE")
         crearBoton("Agenda")
         crearBoton("Kit digital")
+        crearBoton("Ambiental")
 
     }
 
